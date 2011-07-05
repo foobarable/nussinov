@@ -27,10 +27,10 @@ sub delta
 	{
 		return 1;
 	}
-	if ((($i eq 'G') && ($j eq 'U')) || (($j eq 'U') && ($i eq 'G')))
-	{
-		return 1;
-	}
+#	if ((($i eq 'G') && ($j eq 'U')) || (($j eq 'U') && ($i eq 'G')))
+#	{
+#		return 1;
+#	}
 	return 0;
 }
 
@@ -80,15 +80,50 @@ sub gamma
 		}
 	}
 
+	push(@results,\%diag);
 	push(@results,\%up);
 	push(@results,\%left);
 	push(@results,\%bifork);
-	push(@results,\%diag);
 
 	$max = (sort { $a->{score} <=> $b->{score}  }  (@results))[-1];    
 
 	return $max;
 }
+
+sub traceback
+{
+	my $field = shift;
+	my $sequence = shift;
+	my $j = length($sequence)-1;
+	my $i = 0;
+	my $leftresult="";
+	my $rightresult="";
+	while ($field->[$j][$i]{ptr} ne "n")
+	{
+		if ($field->[$j][$i]{ptr} eq "d") 
+		{
+			$leftresult.="(";
+			$rightresult = ")" . $rightresult;
+			$i++;
+			$j--;
+			print("Going diagonal to $j $i\n");
+		}
+		elsif ($field->[$j][$i]{ptr} eq "l") 
+		{	
+			$rightresult = "." . $rightresult;
+			$j--;
+			print("Going left to $j $i\n");
+		}
+		elsif ($field->[$j][$i]{ptr} eq "u") 
+		{
+			$i++;
+			$leftresult.=".";
+			print("Going down to $j $i\n");
+		}
+	}
+	return $leftresult . $rightresult;
+}
+
 
 sub printField
 {
@@ -135,6 +170,7 @@ sub initializeField
 			if (($i == $j) || ($i == $j + 1))
 			{
 				$field->[$j][$i]{score} = 0;
+				$field->[$j][$i]{ptr}= "n";
 			}
 		}
 	}
@@ -162,6 +198,7 @@ sub main
 		&initializeField(\@field, $size);
 		&fill_array(\@field, $size,$sequence);
 		&printField(\@field, $size,$sequence);
+		print("\n", $sequence, "\n" , &traceback(\@field,$sequence). "\n");
 	}
 
 }
