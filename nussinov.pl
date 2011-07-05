@@ -102,8 +102,7 @@ sub traceback
 {
 	my $field = shift;
 	my $sequence = shift;
-	my $leftresult="";
-	my $rightresult="";
+	my $result = "." x length($sequence);
 	my @stack = ();
 	push(@stack,$field->[length($sequence)-1][0]);	
 
@@ -112,26 +111,23 @@ sub traceback
 	{
 		my %actual = %{pop(@stack)};
 		
-		#print("$actual{jcoord} $actual{icoord}\n");
 	
 		next if($actual{ptr} eq "n");
 
 		if ($actual{ptr} eq "d") 
 		{
-			$leftresult.="(";
-			$rightresult = ")" . $rightresult;
+			substr($result,$actual{jcoord},1) = ")";
+			substr($result,$actual{icoord},1) = "(";
 			push(@stack,$field->[$actual{jcoord}-1][$actual{icoord}+1]);
 			print("Going diagonal to $actual{jcoord} $actual{icoord}\n");
 		}
 		elsif ($actual{ptr} eq "l") 
 		{	
-			$rightresult = "." . $rightresult;
 			push(@stack,$field->[$actual{jcoord}-1][$actual{icoord}]);
 			print("Going left to $actual{jcoord} $actual{icoord}\n");
 		}
 		elsif ($actual{ptr} eq "u") 
 		{
-			$leftresult.=".";
 			push(@stack,$field->[$actual{jcoord}][$actual{icoord}+1]);
 			print("Going down to $actual{jcoord} $actual{icoord}\n");
 		}
@@ -142,7 +138,7 @@ sub traceback
 			print("Jumping to " ,$actual{k}+1," $actual{icoord} and $actual{jcoord} $actual{k}\n");
 		}
 	} 
-	return $leftresult . $rightresult;
+	return $result;
 }
 
 
