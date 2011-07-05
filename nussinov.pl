@@ -6,6 +6,12 @@ use warnings;
 my $view="score";
 
 
+
+
+
+
+
+
 sub readFile
 {
 	my $file = shift;
@@ -19,11 +25,11 @@ sub delta
 {
 	my $j = shift;
 	my $i = shift;
-	if ((($i eq 'A') && ($j eq 'U')) || (($j eq 'U') && ($i eq 'A')))
+	if ((($i eq 'A') && ($j eq 'U')) || (($i eq 'U') && ($j eq 'A')))
 	{
 		return 1;
 	}
-	if ((($i eq 'G') && ($j eq 'C')) || (($j eq 'C') && ($i eq 'G')))
+	if ((($i eq 'G') && ($j eq 'C')) || (($i eq 'C') && ($j eq 'G')))
 	{
 		return 1;
 	}
@@ -46,8 +52,9 @@ sub fill_array
 		for (my $x = $j ; $x < $size; $x++)
 		{
 			my $resultHash = &gamma($sequence,$field,$x,$x-$j);
-			$field->[$x][$x-$j]{score} = $resultHash->{score};
-			$field->[$x][$x-$j]{ptr} = $resultHash->{ptr};
+			$field->[$x][$x-$j] = $resultHash;
+			
+			
 			$field->[$x][$x-$j]{jcoord} = $x;
 			$field->[$x][$x-$j]{icoord} = $x-$j;
 		}
@@ -69,22 +76,22 @@ sub gamma
 	my %up   = ( score => $field->[$j    ][$i + 1]{score}, ptr => "u");
 
 	
-	my %bifork = ( score => 0, ptr => 0);
+	my %bifork = ( score => 0, ptr => "b", k => 0);
 	my $ktemp = 0;
-	for (my $k=$j; $k<$i; $k++)
+	for (my $k=$i+1; $k<$j; $k++)
 	{
-		$ktemp=$field->[$j][$k]{score} + $field->[$k+1][$i]{score};
+		$ktemp=$field->[$k][$i]{score} + $field->[$j][$k+1]{score};
 		if($ktemp > $bifork{score})
 		{
 			$bifork{score}=$ktemp;
-			$bifork{ptr}=$k;
+			$bifork{k}=$k;
 		}
 	}
 
 	push(@results,\%diag);
+	push(@results,\%bifork);
 	push(@results,\%up);
 	push(@results,\%left);
-	push(@results,\%bifork);
 
 	$max = (sort { $a->{score} <=> $b->{score}  }  (@results))[-1];    
 
@@ -128,10 +135,11 @@ sub traceback
 			push(@stack,$field->[$actual{jcoord}][$actual{icoord}+1]);
 			print("Going down to $actual{jcoord} $actual{icoord}\n");
 		}
-		elsif ($actual{ptr} =~ m/\d+/)
-		{	
-			push(@stack,$field->[$actual{ptr}+1][$actual{jcoord}]);
-			push(@stack,$field->[$actual{icoord}][$actual{ptr}]);
+		elsif ($actual{ptr} eq "b")
+		{
+			push(@stack,$field->[$actual{k}+1][$actual{icoord}]);
+			push(@stack,$field->[$actual{jcoord}][$actual{k}]);
+			print("Jumping to " ,$actual{k}+1," $actual{icoord} and $actual{jcoord} $actual{k}\n");
 		}
 	} 
 	return $leftresult . $rightresult;
