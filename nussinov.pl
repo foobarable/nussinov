@@ -3,6 +3,9 @@
 use strict;
 use warnings;
 
+my $view="score";
+
+
 sub readFile
 {
 	my $file = shift;
@@ -63,16 +66,25 @@ sub gamma
 	my %diag = ( score => $field->[$j - 1][$i + 1]{score}  + &delta(substr($sequence,$j,1),substr($sequence,$i,1)), ptr => "d");
 	my %left = ( score => $field->[$j - 1][$i    ]{score}, ptr => "l");
 	my %up   = ( score => $field->[$j    ][$i + 1]{score}, ptr => "u");
-	my %bifork = ();
 
-	push(@results,\%diag);
-	push(@results,\%up);
-	push(@results,\%left);
-	my $kmax=0;
+	
+	my %bifork = ( score => 0, ptr => 0);
+	my $ktemp = 0;
 	for (my $k=$j; $k<$i; $k++)
 	{
-			
+		$ktemp=$field->[$j][$k]{score} + $field->[$k+1][$i]{score};
+		if($ktemp > $bifork{score})
+		{
+			$bifork{score}=$ktemp;
+			$bifork{ptr}=$k;
+		}
 	}
+
+	push(@results,\%up);
+	push(@results,\%left);
+	push(@results,\%bifork);
+	push(@results,\%diag);
+
 	$max = (sort { $a->{score} <=> $b->{score}  }  (@results))[-1];    
 
 	return $max;
@@ -95,9 +107,9 @@ sub printField
 		print(" " . substr($sequence,$i,1) . " ");
 		for (my $j = 0 ; $j < $size ; $j++)
 		{
-			if (defined($field->[$j][$i]{ptr}))
+			if (defined($field->[$j][$i]{$view}))
 			{
-				print(" ",$field->[$j][$i]{ptr}, " ");
+				print(" ",$field->[$j][$i]{$view}, " ");
 			}
 			elsif($j<$i)
 			{
@@ -138,14 +150,18 @@ sub main
 	}
 	else
 	{
-		if (scalar(@ARGV) == 1)
+		print($sequence= &readFile($ARGV[0]), "\n");
+		if(scalar(@ARGV) > 1)
 		{
-			print($sequence= &readFile($ARGV[0]), "\n");
-			my $size = length($sequence);
-			&initializeField(\@field, $size);
-		        &fill_array(\@field, $size,$sequence);
-			&printField(\@field, $size,$sequence);
+			if((lc($ARGV[1]) eq "score") || (lc($ARGV[1]) eq "ptr"))
+			{
+				$view = $ARGV[1];
+			}
 		}
+		my $size = length($sequence);
+		&initializeField(\@field, $size);
+		&fill_array(\@field, $size,$sequence);
+		&printField(\@field, $size,$sequence);
 	}
 
 }
