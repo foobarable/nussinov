@@ -48,10 +48,11 @@ sub fill_array
 			my $resultHash = &gamma($sequence,$field,$x,$x-$j);
 			$field->[$x][$x-$j]{score} = $resultHash->{score};
 			$field->[$x][$x-$j]{ptr} = $resultHash->{ptr};
+			$field->[$x][$x-$j]{jcoord} = $x;
+			$field->[$x][$x-$j]{icoord} = $x-$j;
 		}
 	}
 }
-
 
 
 sub gamma
@@ -94,33 +95,45 @@ sub traceback
 {
 	my $field = shift;
 	my $sequence = shift;
-	my $j = length($sequence)-1;
-	my $i = 0;
 	my $leftresult="";
 	my $rightresult="";
-	while ($field->[$j][$i]{ptr} ne "n")
+	my @stack = ();
+	push(@stack,$field->[length($sequence)-1][0]);	
+
+
+	while(scalar(@stack)>0)
 	{
-		if ($field->[$j][$i]{ptr} eq "d") 
+		my %actual = %{pop(@stack)};
+		
+		#print("$actual{jcoord} $actual{icoord}\n");
+	
+		next if($actual{ptr} eq "n");
+
+		if ($actual{ptr} eq "d") 
 		{
 			$leftresult.="(";
 			$rightresult = ")" . $rightresult;
-			$i++;
-			$j--;
-			print("Going diagonal to $j $i\n");
+			push(@stack,$field->[$actual{jcoord}-1][$actual{icoord}+1]);
+			print("Going diagonal to $actual{jcoord} $actual{icoord}\n");
 		}
-		elsif ($field->[$j][$i]{ptr} eq "l") 
+		elsif ($actual{ptr} eq "l") 
 		{	
 			$rightresult = "." . $rightresult;
-			$j--;
-			print("Going left to $j $i\n");
+			push(@stack,$field->[$actual{jcoord}-1][$actual{icoord}]);
+			print("Going left to $actual{jcoord} $actual{icoord}\n");
 		}
-		elsif ($field->[$j][$i]{ptr} eq "u") 
+		elsif ($actual{ptr} eq "u") 
 		{
-			$i++;
 			$leftresult.=".";
-			print("Going down to $j $i\n");
+			push(@stack,$field->[$actual{jcoord}][$actual{icoord}+1]);
+			print("Going down to $actual{jcoord} $actual{icoord}\n");
 		}
-	}
+		elsif ($actual{ptr} =~ m/\d+/)
+		{	
+			push(@stack,$field->[$actual{ptr}+1][$actual{jcoord}]);
+			push(@stack,$field->[$actual{icoord}][$actual{ptr}]);
+		}
+	} 
 	return $leftresult . $rightresult;
 }
 
@@ -189,7 +202,7 @@ sub main
 		print($sequence= &readFile($ARGV[0]), "\n");
 		if(scalar(@ARGV) > 1)
 		{
-			if((lc($ARGV[1]) eq "score") || (lc($ARGV[1]) eq "ptr"))
+			if((lc($ARGV[1]) eq "score") || (lc($ARGV[1]) eq "ptr") || (lc($ARGV[1]) eq "icoord") || (lc($ARGV[1]) eq "jcoord"))
 			{
 				$view = $ARGV[1];
 			}
