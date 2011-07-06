@@ -51,10 +51,7 @@ sub fill_array
 	{	
 		for (my $x = $j ; $x < $size; $x++)
 		{
-			my $resultHash = &gamma($sequence,$field,$x,$x-$j);
-			$field->[$x][$x-$j] = $resultHash;
-			
-			
+			$field->[$x][$x-$j] = &gamma($sequence,$field,$x,$x-$j);
 			$field->[$x][$x-$j]{jcoord} = $x;
 			$field->[$x][$x-$j]{icoord} = $x-$j;
 		}
